@@ -62,6 +62,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (p === '/api/run' && req.method === 'POST') return send(res, 200, { ok: runTask('daily', ['src/run.js']) });
+    if (p === '/api/autopilot' && req.method === 'POST') return send(res, 200, { ok: runTask('autopilot', ['src/autopilot.js']) });
 
     if (p === '/api/log') {
       const log = fs.existsSync(path.join(DATA, 'run.log')) ? fs.readFileSync(path.join(DATA, 'run.log'), 'utf8') : '';

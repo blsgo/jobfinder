@@ -122,7 +122,8 @@ header { display: flex; align-items: center; justify-content: space-between; gap
     <div class="brand"><div class="kick">Web Tactics · Autopilot</div><h1>Job Seeker</h1></div>
     <div class="hstat">
       <div class="status"><span class="pulse" id="pulse"></span><span id="statusText">Idle</span></div>
-      <button class="btn" id="runBtn">Run now</button>
+      <button class="btn" id="runBtn">Find new jobs</button>
+      <button class="btn white" id="apBtn">Apply now</button>
       <button class="btn primary" id="batchBtn">Open what needs me</button>
     </div>
   </header>
@@ -280,6 +281,7 @@ $('#drawerBg').onclick = closeDrawer;
 document.addEventListener('keydown', (e) => e.key === 'Escape' && closeDrawer());
 $('#q').oninput = (e) => { state.q = e.target.value; render(); };
 $('#runBtn').onclick = async () => { const r = await api('/api/run', { method: 'POST' }); toast(r.ok ? 'Hunting, tailoring and applying' : 'Already running'); load(); };
+$('#apBtn').onclick = async () => { const r = await api('/api/autopilot', { method: 'POST' }); toast(r.ok ? 'Applying to queued jobs in the background' : 'Already applying'); load(); };
 $('#batchBtn').onclick = async () => {
   const ids = state.jobs.filter(TABS[0][2]).sort((a, b) => fitOf(b) - fitOf(a)).slice(0, 5).map((j) => j.id);
   if (!ids.length) return toast('Nothing needs you right now');
@@ -292,7 +294,7 @@ async function load() {
   state.jobs = d.jobs; state.running = d.running;
   const busy = d.running.filter((r) => !r.startsWith('apply'));
   $('#pulse').classList.toggle('on', busy.length > 0);
-  $('#statusText').textContent = busy.length ? (busy.includes('daily') ? 'Autopilot running' : 'Tailoring') : d.lastRun ? `Last run ${ago(d.lastRun.finished)}` : 'Idle';
+  $('#statusText').textContent = busy.length ? (busy.includes('daily') ? 'Finding and applying' : busy.includes('autopilot') ? 'Applying' : 'Tailoring') : d.lastRun ? `Last run ${ago(d.lastRun.finished)}` : 'Idle';
   render();
   if ($('#logBox').open) $('#log').textContent = (await api('/api/log')).lines.join('\n');
 }
