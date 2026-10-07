@@ -121,7 +121,7 @@ export async function fillPage(page, job, p) {
       }
       // Dropdowns / comboboxes: only factual picks; eligibility questions stay with the human.
       if (f.tag === 'select' || f.combo) {
-        const pick = CHOICES.find(([re]) => re.test(lab));
+        const pick = choicesFor(p).find(([re]) => re.test(lab));
         const ok = pick && (f.tag === 'select' ? await pickNative(loc, pick[1]) : await pickCombo(f.frame, loc, pick[1]));
         if (ok) filled.push(f.label.split(' | ')[0].slice(0, 40));
         else if (f.required) todo.push(f.label.split(' | ')[0]);
@@ -149,10 +149,10 @@ export async function fillPage(page, job, p) {
   return { filled, todo: [...new Set(todo.map((t) => t.replace(/[|*✱]/g, '').trim()).filter(Boolean))], fieldCount: fields.length };
 }
 
-const CHOICES = [
+const choicesFor = (p) => [
   [/sponsor|authori[sz]|right to work|legally|eligib|relocat|willing to|clearance|citizen/, null],
-  [/country/, ['United Arab Emirates', 'UAE']],
-  [/city|location|where are you (based|located)/, ['Dubai']],
+  [/country/, [p.country || 'United Arab Emirates', 'UAE']],
+  [/city|location|where are you (based|located)/, [p.city || 'Dubai', 'Dubai'].filter((v, i, a) => a.indexOf(v) === i)],
   [/how did you (hear|find|learn)|source/, ['Company website', 'Company Website', 'Careers', 'Website', 'Job board', 'Other']],
 ];
 

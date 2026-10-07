@@ -256,7 +256,7 @@ async function processJob(ctx, job, p, cfg, live) {
     const fill = await fillPage(page, job, p);
     await page.waitForTimeout(2500); // some ATSs parse the CV and autofill fields; let that settle, then correct it
     const addr = page.locator('input[name="address"]:visible, input[id="address"]:visible').first();
-    if (await addr.count() && !/dubai/i.test(await addr.inputValue().catch(() => 'dubai'))) {
+    if (await addr.count() && !new RegExp(p.city || 'Dubai', 'i').test(await addr.inputValue().catch(() => p.city || 'Dubai'))) {
       await addr.fill(p.location).catch(() => {}); await addr.press('Escape').catch(() => {});
     }
     let qs = await collectAll(page);

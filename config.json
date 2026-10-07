@@ -817,7 +817,7 @@
   },
   "autoApply": {
     "enabled": true,
-    "submit": false,
+    "submit": true,
     "maxPerDay": 150,
     "maxPerCompanyPerDay": 2,
     "minFit": 50,
@@ -829,6 +829,6 @@
       25,
       70
     ],
-    "acknowledgePrivacyPolicies": false
+    "acknowledgePrivacyPolicies": true
   }
 }
