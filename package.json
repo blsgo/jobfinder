@@ -1,0 +1,19 @@
+{
+  "name": "job-seeker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Autopilot job hunter: finds, scores, tailors and pre-fills high-paying remote applications.",
+  "scripts": {
+    "hunt": "node src/hunt.js",
+    "tailor": "node src/tailor.js",
+    "daily": "node src/run.js",
+    "cv": "node src/render.js --master",
+    "apply": "node src/apply.js",
+    "dashboard": "node src/server.js",
+    "check-companies": "node src/check-companies.js"
+  },
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}

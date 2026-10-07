@@ -1,0 +1,142 @@
+{
+  "name": "Alex Example",
+  "firstName": "Alex",
+  "lastName": "Example",
+  "email": "alex@example.com",
+  "phone": "+971 50 000 0000",
+  "location": "Dubai, United Arab Emirates",
+  "city": "Dubai",
+  "country": "United Arab Emirates",
+  "timezone": "GST (UTC+4), overlaps Europe fully and US East mornings",
+  "links": {
+    "website": "https://example.com",
+    "portfolio": "https://example.com/work",
+    "linkedin": "https://www.linkedin.com/in/alex-example/",
+    "instagram": "",
+    "github": "https://github.com/alex-example",
+    "app": ""
+  },
+  "headline": "AI Automation & Systems Lead",
+  "summary": "Two to four factual sentences about who you are and what you deliver.",
+  "skills": {
+    "AI & Automation": [
+      "AI agents and workflows (Claude, OpenAI)",
+      "Claude Code (25+ custom skills, 8 agents)",
+      "MCP integrations",
+      "n8n / Zapier-style automation",
+      "Prompt and workflow design",
+      "Browser automation (Playwright)",
+      "CRM and outreach automation",
+      "ElevenLabs voice",
+      "Whisper transcription"
+    ],
+    "Content & Creative": [
+      "AI image and video generation (Higgsfield, Kling, Seedance)",
+      "Video editing (DaVinci Resolve, FFmpeg)",
+      "Motion graphics",
+      "Brand identity",
+      "Social and short-form content",
+      "Arabic and English captions",
+      "UI/UX design",
+      "3D and WebGL concepts"
+    ],
+    "Business & Operations": [
+      "Founder, P&L ownership",
+      "Process mapping and SOPs",
+      "Pricing, proposals and invoicing",
+      "Client and stakeholder management",
+      "Meta and Google Ads",
+      "Analytics (GA4, Pixel)",
+      "Outbound sales systems",
+      "Cross-team problem solving"
+    ],
+    "Web & Commerce": [
+      "WordPress and WooCommerce",
+      "Shopify and Salla",
+      "Landing pages and CRO",
+      "SEO",
+      "Payment gateways (Stripe, MyFatoorah, Apple Pay)",
+      "Email deliverability (SPF/DKIM/DMARC)",
+      "Hosting, Cloudflare and VPS"
+    ],
+    "Technical": [
+      "AI-assisted development",
+      "JavaScript / TypeScript",
+      "React and Next.js",
+      "Electron desktop apps",
+      "Flutter mobile apps",
+      "Laravel",
+      "Supabase and SQLite",
+      "REST APIs"
+    ]
+  },
+  "experience": [
+    {
+      "company": "Example Studio",
+      "url": "https://example.com",
+      "role": "Founder & Head of Systems",
+      "location": "Dubai, UAE",
+      "start": "2021",
+      "end": "Present",
+      "bullets": [
+        "Replace these bullets with facts about your own work. The AI only ever rephrases what you write here."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "project1",
+      "name": "Project 1",
+      "url": "",
+      "tags": [
+        "three.js",
+        "webgl",
+        "gsap",
+        "performance",
+        "creative"
+      ],
+      "desc": "One factual sentence about what you built and the result."
+    },
+    {
+      "id": "project2",
+      "name": "Project 2",
+      "url": "",
+      "tags": [
+        "laravel",
+        "php",
+        "stripe",
+        "full-stack",
+        "testing"
+      ],
+      "desc": "One factual sentence about what you built and the result."
+    }
+  ],
+  "education": [
+    {
+      "school": "Your University",
+      "location": "",
+      "degree": "Bachelor's degree",
+      "years": ""
+    }
+  ],
+  "extras": [],
+  "languages": [
+    "Arabic (native)",
+    "English (fluent)"
+  ],
+  "application": {
+    "workAuthorization": "Based in Dubai, UAE. Available to work remotely as a contractor or through an employer-of-record; open to relocation for the right role.",
+    "needsSponsorship": "No, for remote/contractor roles. Yes, if the role requires on-site work outside the UAE.",
+    "salaryExpectation": "AED 25,000-35,000 per month (or USD equivalent for remote roles), flexible for the right role",
+    "noticePeriod": "2 weeks",
+    "startDate": "Within 2 weeks of offer",
+    "yearsExperience": "6",
+    "howDidYouHear": "Company careers page",
+    "pronouns": "",
+    "currentCompensation": "",
+    "nationality": "",
+    "uaeResidency": "",
+    "relocation": "",
+    "skillYears": {}
+  }
+}

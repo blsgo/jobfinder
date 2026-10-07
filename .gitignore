@@ -1,0 +1,6 @@
+node_modules/
+data/
+output/
+profile/profile.json
+*.log
+.env
