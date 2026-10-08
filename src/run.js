@@ -3,12 +3,14 @@ import path from 'node:path';
 import { hunt } from './hunt.js';
 import { tailorBatch } from './tailor.js';
 import { autopilot } from './autopilot.js';
+import { estimateSalaries } from './estimate.js';
 import { loadJobs } from './store.js';
 import { DATA, writeJson, log } from './util.js';
 
 const started = new Date().toISOString();
 try {
   const h = await hunt();
+  await estimateSalaries().catch((e) => log(`estimate skipped: ${e.message}`));
   await tailorBatch();
   await autopilot();
   const jobs = Object.values(loadJobs());

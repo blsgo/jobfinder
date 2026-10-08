@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { askClaude } from './llm.js';
+import { monthlyMaxAED } from './estimate.js';
 import { sanitizeAll, findTells, STYLE_RULES } from './humanize.js';
 import { cvHtml, letterHtml, htmlToPdf, closeBrowser } from './render.js';
 import { loadJobs, saveJobs } from './store.js';
@@ -95,6 +96,7 @@ export async function tailorBatch({ limit, ids } = {}) {
     ? ids.map((id) => jobs[id]).filter(Boolean)
     : Object.values(jobs)
         .filter((j) => j.status === 'new' && j.score >= cfg.minScoreToTailor)
+        .filter((j) => { const m = monthlyMaxAED(j); return m == null || m >= (cfg.minMonthlyAED ?? 0); })
         .sort((a, b) => b.score - a.score)
         .slice(0, limit ?? cfg.tailorPerRun);
 

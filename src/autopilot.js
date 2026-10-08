@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { fillPage, pickCombo, declineCookies } from './apply.js';
 import { resolveDirect } from './resolve.js';
+import { monthlyMaxAED } from './estimate.js';
 import { askClaude } from './llm.js';
 import { sanitize, STYLE_RULES } from './humanize.js';
 import { loadJobs, updateJob } from './store.js';
@@ -326,6 +327,7 @@ export async function autopilot({ limit, ids, dry } = {}) {
 
   const queue = (ids?.length ? ids.map((id) => jobs[id]).filter(Boolean) : Object.values(jobs)
     .filter((j) => ['tailored', 'ready'].includes(j.status) && j.files?.cv && (ap.verdicts || ['apply']).includes(j.ai?.verdict) && (j.ai?.fit ?? 0) >= (ap.minFit ?? 50))
+    .filter((j) => { const m = monthlyMaxAED(j); return m == null || m >= (cfg.minMonthlyAED ?? 0); })
     .filter((j) => ids || !j.autopilot || (j.autopilot.state === 'dry-run-ok' && live) || j.autopilot.state === 'error' || (dry && j.autopilot.state === 'needs-you'))
     .sort((a, b) => (b.ai?.fit ?? 0) - (a.ai?.fit ?? 0)))
     .filter((j) => (perCompany[j.company] = (perCompany[j.company] || 0) + 1) <= (ap.maxPerCompanyPerDay ?? 2))

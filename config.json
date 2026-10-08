@@ -830,5 +830,6 @@
       70
     ],
     "acknowledgePrivacyPolicies": true
-  }
+  },
+  "minMonthlyAED": 20000
 }
