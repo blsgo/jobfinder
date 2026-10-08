@@ -1,7 +1,7 @@
 {
   "salaryFloorUSD": 60000,
   "maxAgeDays": 30,
-  "tailorPerRun": 60,
+  "tailorPerRun": 70,
   "minScoreToTailor": 58,
   "includeEuropeOnly": true,
   "includeDubaiOnsite": true,
@@ -420,7 +420,15 @@
     "copywriter",
     "staff engineer",
     "principal engineer",
-    "staff software"
+    "staff software",
+    "uae national",
+    "emirati",
+    "emiratisation",
+    "emiratization",
+    "national only",
+    "nationals only",
+    "saudi national",
+    "qatari national"
   ],
   "skills": [
     "react",
@@ -624,6 +632,7 @@
       "consensys",
       "contentful",
       "datadog",
+      "deliveroo",
       "descript",
       "discord",
       "dropbox",
@@ -635,14 +644,20 @@
       "grafanalabs",
       "hala",
       "heygen",
+      "impact",
       "intercom",
+      "klaviyo",
       "lovable",
       "make",
       "mercury",
       "mongodb",
       "mozilla",
       "netlify",
+      "northbeam",
+      "nuitee",
+      "ogilvy",
       "okx",
+      "picsart",
       "planetscale",
       "reddit",
       "smartling",
@@ -654,21 +669,28 @@
       "tamara",
       "tines",
       "togetherai",
+      "triplewhale",
       "turing",
       "twilio",
       "typeform",
       "vercel",
       "warp",
       "webflow",
-      "wikimedia"
+      "wikimedia",
+      "wundermanthompson",
+      "yotpo"
     ],
     "lever": [
+      "aldar",
       "articulate",
       "binance",
+      "gohighlevel",
       "kinsta",
       "neon",
+      "omnisend",
       "palantir",
       "spotify",
+      "superside",
       "toptal"
     ],
     "ashby": [
@@ -682,6 +704,7 @@
       "browserbase",
       "buffer",
       "character",
+      "circle",
       "claylabs",
       "clerk",
       "close",
@@ -692,13 +715,17 @@
       "cursor",
       "decagon",
       "deepgram",
+      "deliveroo",
       "elevenlabs",
       "factory",
       "gamma",
+      "gorgias",
       "granola",
+      "kit",
       "kraken.com",
       "krea",
       "langchain",
+      "leantech",
       "linear",
       "lovable",
       "miro",
@@ -707,6 +734,7 @@
       "neon",
       "notion",
       "openai",
+      "opusclip",
       "perplexity",
       "phantom",
       "pika",
@@ -715,6 +743,7 @@
       "posthog",
       "rain",
       "ramp",
+      "recharge",
       "replit",
       "resend",
       "runway",
@@ -723,6 +752,7 @@
       "supabase",
       "synthesia",
       "tavus",
+      "thinkific",
       "tldraw",
       "uniswap",
       "vapi",
@@ -730,6 +760,34 @@
       "writer",
       "zapier",
       "ziina"
+    ],
+    "workable": [
+      "flat6labs",
+      "jasper"
+    ],
+    "smartrecruiters": [
+      "DeliveryHero",
+      "almosafer",
+      "mediacom",
+      "namshi",
+      "noonacademy",
+      "seera",
+      "uber"
+    ],
+    "recruitee": [
+      "Unifonic",
+      "astrolabs",
+      "clay",
+      "gorgias",
+      "lindy",
+      "mailerlite",
+      "make",
+      "podia"
+    ],
+    "breezy": [
+      "dubizzlelabs",
+      "manypixels",
+      "stake"
     ]
   },
   "searchTerms": [
@@ -811,7 +869,28 @@
       "product manager",
       "content creator",
       "motion designer",
-      "technology manager"
+      "technology manager",
+      "head of",
+      "director",
+      "AI lead",
+      "automation lead",
+      "growth",
+      "e-commerce",
+      "ecommerce director",
+      "creative",
+      "marketing director",
+      "product lead",
+      "chief",
+      "digital marketing",
+      "operations director",
+      "strategy",
+      "transformation lead",
+      "content director",
+      "brand director",
+      "social media director",
+      "AI engineer",
+      "solutions",
+      "consultant"
     ],
     "indeed": true
   },
@@ -820,7 +899,7 @@
     "submit": true,
     "maxPerDay": 150,
     "maxPerCompanyPerDay": 2,
-    "minFit": 50,
+    "minFit": 40,
     "verdicts": [
       "apply",
       "maybe"
@@ -831,5 +910,6 @@
     ],
     "acknowledgePrivacyPolicies": true
   },
-  "minMonthlyAED": 20000
+  "minMonthlyAED": 20000,
+  "officialLookupsPerRun": 15
 }

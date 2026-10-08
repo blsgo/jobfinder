@@ -88,6 +88,14 @@ ${JSON.stringify(data)}`,
   return { ai: data, files, costUSD };
 }
 
+// Write applications for the jobs most worth it first: fit, then pay, then a link we can actually apply through.
+function priority(j) {
+  const m = monthlyMaxAED(j) || 0;
+  const pay = m >= 45000 ? 18 : m >= 35000 ? 13 : m >= 28000 ? 9 : m >= 20000 ? 4 : 0;
+  const link = j.link?.kind === 'direct' ? 8 : ['indeed', 'board', 'blocked'].includes(j.link?.kind) ? -6 : 0;
+  return j.score + pay + link;
+}
+
 export async function tailorBatch({ limit, ids } = {}) {
   const cfg = config();
   const p = loadProfile();
@@ -97,7 +105,7 @@ export async function tailorBatch({ limit, ids } = {}) {
     : Object.values(jobs)
         .filter((j) => j.status === 'new' && j.score >= cfg.minScoreToTailor)
         .filter((j) => { const m = monthlyMaxAED(j); return m == null || m >= (cfg.minMonthlyAED ?? 0); })
-        .sort((a, b) => b.score - a.score)
+        .sort((a, b) => priority(b) - priority(a))
         .slice(0, limit ?? cfg.tailorPerRun);
 
   log(`tailor: ${queue.length} jobs`);

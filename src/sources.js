@@ -311,7 +311,67 @@ export async function keywordSearches(terms = []) {
   return tasks;
 }
 
-export const BOARD_FETCHERS = { greenhouse: greenhouseBoard, lever: leverBoard, ashby: ashbyBoard };
+const ROUGH_FIT = /ai|automation|digital|marketing|creative|design|video|motion|content|brand|product|operations|ops|e-?commerce|growth|innovation|transformation|manager|head|director|lead|chief|strategy|social/i;
+
+async function workableBoard(slug) {
+  const d = await fetchJson(`https://apply.workable.com/api/v1/widget/accounts/${slug}?details=true`, { timeout: 45000 });
+  return (d.jobs || []).map((x) =>
+    job({
+      source: 'workable', sourceId: `wk-${slug}-${x.shortcode}`, company: d.name || slug, title: x.title,
+      url: x.url, applyUrl: x.application_url || x.url,
+      location: [x.telecommuting ? 'Remote' : '', x.city, x.country].filter(Boolean).join(', '),
+      remoteHint: x.telecommuting ? true : null, description: stripHtml(x.description || ''),
+      postedAt: x.published_on || x.created_at, ats: 'workable', boardCompany: slug, tags: [x.department, x.employment_type, x.function],
+    })
+  );
+}
+
+async function smartrecruitersBoard(slug) {
+  const d = await fetchJson(`https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100`, { timeout: 45000 });
+  const list = (d.content || []).filter((x) => ROUGH_FIT.test(x.name)).slice(0, 40);
+  return pool(list, 4, async (x) => {
+    let desc = '';
+    try {
+      const det = await fetchJson(`https://api.smartrecruiters.com/v1/companies/${slug}/postings/${x.id}`, { timeout: 20000, retries: 0 });
+      desc = stripHtml(Object.values(det.jobAd?.sections || {}).map((s) => s.text || '').join('\n'));
+    } catch {}
+    return job({
+      source: 'smartrecruiters', sourceId: `sr-${slug}-${x.id}`, company: x.company?.name || slug, title: x.name,
+      url: `https://jobs.smartrecruiters.com/${slug}/${x.id}`, applyUrl: `https://jobs.smartrecruiters.com/${slug}/${x.id}`,
+      location: [x.location?.remote ? 'Remote' : '', x.location?.city, x.location?.country === 'ae' ? 'United Arab Emirates' : x.location?.country].filter(Boolean).join(', '),
+      remoteHint: x.location?.remote ? true : null, description: desc, postedAt: x.releasedDate, ats: 'smartrecruiters', boardCompany: slug,
+      tags: [x.department?.label, x.typeOfEmployment?.label, x.experienceLevel?.label],
+    });
+  });
+}
+
+async function recruiteeBoard(slug) {
+  const d = await fetchJson(`https://${slug}.recruitee.com/api/offers`, { timeout: 45000 });
+  return (d.offers || []).map((x) =>
+    job({
+      source: 'recruitee', sourceId: `rc-${slug}-${x.id}`, company: x.company_name || slug, title: x.title,
+      url: x.careers_url, applyUrl: x.careers_apply_url || x.careers_url,
+      location: [x.remote ? 'Remote' : '', x.city, x.country].filter(Boolean).join(', '), remoteHint: x.remote ? true : null,
+      salaryMin: x.salary?.min ? +x.salary.min : null, salaryMax: x.salary?.max ? +x.salary.max : null, currency: x.salary?.currency,
+      period: /month/i.test(x.salary?.period || '') ? 'month' : /hour/i.test(x.salary?.period || '') ? 'hour' : 'year',
+      description: stripHtml(`${x.description || ''}\n${x.requirements || ''}`), postedAt: x.published_at, ats: 'recruitee', boardCompany: slug,
+      tags: [x.department, x.employment_type_code],
+    })
+  );
+}
+
+async function breezyBoard(slug) {
+  const d = await fetchJson(`https://${slug}.breezy.hr/json`, { timeout: 45000 });
+  return (Array.isArray(d) ? d : []).map((x) =>
+    job({
+      source: 'breezy', sourceId: `bz-${slug}-${x.id}`, company: x.company?.name || slug, title: x.name, url: x.url, applyUrl: x.url,
+      location: [x.location?.is_remote ? 'Remote' : '', x.location?.name].filter(Boolean).join(', '), remoteHint: x.location?.is_remote ? true : null,
+      postedAt: x.published_date, ats: 'breezy', boardCompany: slug, tags: [x.department, x.type?.name],
+    })
+  );
+}
+
+export const BOARD_FETCHERS = { greenhouse: greenhouseBoard, lever: leverBoard, ashby: ashbyBoard, workable: workableBoard, smartrecruiters: smartrecruitersBoard, recruitee: recruiteeBoard, breezy: breezyBoard };
 
 export const AGGREGATORS = { remoteok, remotive, himalayas, jobicy, arbeitnow, weworkremotely, workingnomads, hackernews };
 
@@ -320,7 +380,7 @@ export async function fetchAll(companies = {}, searchTerms = [], uae = {}) {
     ...Object.entries(AGGREGATORS).map(([name, fn]) => ({ name, fn })),
     ...(await keywordSearches(searchTerms)),
     ...uaeSearches(uae),
-    ...(uae.indeed ? [{ name: 'indeed-uae', fn: () => import('./indeed.js').then((m) => m.indeedSearch(uae.terms)) }] : []),
+    ...(uae.indeed ? [{ name: 'indeed-uae', fn: () => import('./indeed.js').then((m) => m.indeedSearch((uae.terms || []).slice(0, 20))) }] : []),
     ...Object.entries(companies).flatMap(([ats, slugs]) =>
       (slugs || []).map((s) => ({ name: `${ats}:${s}`, fn: () => BOARD_FETCHERS[ats](s) }))
     ),

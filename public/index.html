@@ -256,8 +256,8 @@ const I = {
 };
 const TABS = [
   ['needs', 'Needs you', (j) => j.status === 'ready', 'Filled-in forms waiting for your tick, and questions only you can answer.'],
-  ['ready', 'Queued', (j) => j.status === 'tailored' && j.ai?.verdict !== 'skip' && (j.ai?.fit ?? 0) >= 45, 'Tailored and waiting for the autopilot.'],
-  ['longshots', 'Long shots', (j) => j.status === 'tailored' && j.ai?.verdict !== 'skip' && (j.ai?.fit ?? 0) < 45, 'Under 45% fit. Only worth it when the pay is exceptional.'],
+  ['ready', 'Queued', (j) => j.status === 'tailored' && j.ai?.verdict !== 'skip' && (j.ai?.fit ?? 0) >= 40, 'Tailored and waiting for the autopilot.'],
+  ['longshots', 'Long shots', (j) => j.status === 'tailored' && j.ai?.verdict !== 'skip' && (j.ai?.fit ?? 0) < 40, 'Under 40% fit. Only worth it when the pay is exceptional.'],
   ['pipeline', 'Pipeline', (j) => j.status === 'new', 'Matches the AI has not reviewed yet.'],
   ['applied', 'Applied', (j) => ['applied', 'interview', 'offer'].includes(j.status), 'Everything sent, newest first.'],
   ['skipped', 'Skipped', (j) => ['skipped', 'rejected', 'expired'].includes(j.status), 'Poor fits, closed or expired roles.'],
@@ -339,6 +339,19 @@ function render() {
   $('#list').innerHTML = rows.map(row).join('');
 }
 
+// Where the job link actually goes, from the last link check.
+function dest(j) {
+  const l = j.link;
+  if (!l) return '';
+  if (l.kind === 'direct') return `<span class="tag ok">Company form · ${esc(l.host)}</span>`;
+  if (l.kind === 'site') return `<span class="tag">Company site · ${esc(l.host)}</span>`;
+  if (l.kind === 'indeed') return '<span class="tag warn">Opens on Indeed</span>';
+  if (l.kind === 'board') return '<span class="tag warn">Opens on Himalayas</span>';
+  if (l.kind === 'blocked') return `<span class="tag warn">Bot check · ${esc(l.host)}</span>`;
+  if (l.kind === 'unreachable') return '<span class="tag debt">Link not loading</span>';
+  return '';
+}
+
 function row(j) {
   const ai = j.ai || {};
   const s = pay(j);
@@ -355,7 +368,7 @@ function row(j) {
       <div class="meta"><span class="co">${esc(j.company)}</span><span>${esc(j.locationLabel || j.location)}</span><span>${ago(j.postedAt)}</span></div>
       ${ai.reason ? `<div class="why">${esc(ai.reason)}</div>` : ''}
       ${note}
-      <div class="tags">${ai.verdict ? `<span class="tag ${ai.verdict === 'apply' ? 'ok' : ai.verdict === 'maybe' ? 'warn' : 'debt'}">${ai.verdict}</span>` : ''}${j.family ? `<span class="tag">${esc(j.family)}</span>` : ''}${j.appliedVia === 'autopilot' ? '<span class="tag ok">Auto-applied</span>' : ''}${done ? `<span class="tag ok">Applied ${ago(j.appliedAt)}</span>` : ''}</div>
+      <div class="tags">${ai.verdict ? `<span class="tag ${ai.verdict === 'apply' ? 'ok' : ai.verdict === 'maybe' ? 'warn' : 'debt'}">${ai.verdict}</span>` : ''}${j.family ? `<span class="tag">${esc(j.family)}</span>` : ''}${dest(j)}${j.appliedVia === 'autopilot' ? '<span class="tag ok">Auto-applied</span>' : ''}${done ? `<span class="tag ok">Applied ${ago(j.appliedAt)}</span>` : ''}</div>
     </div>
     <div class="pay">${s ? `<div class="amt num">${payText(s)}<small>/mo</small></div><div class="src ${s.kind}">${s.kind === 'listed' ? 'Listed in the post' : 'Market estimate'}</div>` : '<div class="none">Not listed</div>'}</div>
     <div class="acts">
@@ -363,7 +376,7 @@ function row(j) {
       ${!tailored && j.status === 'new' ? `<button class="btn" data-act="tailor" data-id="${j.id}">Write application</button>` : ''}
       ${j.status === 'applied' ? `<button class="btn" data-act="interview" data-id="${j.id}">Got interview</button>` : ''}
       <div class="row">
-        <a class="btn ghost" href="${esc(j.url)}" target="_blank" rel="noopener">Post</a>
+        <a class="btn ghost" href="${esc(j.link?.finalUrl || j.applyUrl || j.url)}" target="_blank" rel="noopener" title="${esc(j.link?.finalUrl || j.applyUrl || j.url)}">Job page</a>
         ${tailored ? `<a class="btn ghost" href="/file?path=${encodeURIComponent(j.files.cv)}" target="_blank">CV</a>` : ''}
         ${done || j.status === 'skipped' ? '' : `<button class="btn ghost" data-act="skip" data-id="${j.id}">Skip</button>`}
       </div>

@@ -4,6 +4,7 @@ import { hunt } from './hunt.js';
 import { tailorBatch } from './tailor.js';
 import { autopilot } from './autopilot.js';
 import { estimateSalaries } from './estimate.js';
+import { verifyLinks, findOfficialLinks } from './verify.js';
 import { loadJobs } from './store.js';
 import { DATA, writeJson, log } from './util.js';
 
@@ -11,7 +12,9 @@ const started = new Date().toISOString();
 try {
   const h = await hunt();
   await estimateSalaries().catch((e) => log(`estimate skipped: ${e.message}`));
+  await verifyLinks().catch((e) => log(`verify skipped: ${e.message}`));
   await tailorBatch();
+  await findOfficialLinks().catch((e) => log(`official lookup skipped: ${e.message}`));
   await autopilot();
   const jobs = Object.values(loadJobs());
   const today = new Date().toISOString().slice(0, 10);

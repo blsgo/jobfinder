@@ -5,7 +5,8 @@ import { scoreJob } from './score.js';
 import { loadJobs, saveJobs, jobId } from './store.js';
 import { config, log } from './util.js';
 
-const SOURCE_RANK = { greenhouse: 0, lever: 0, ashby: 0, himalayas: 1, remoteok: 2, jobicy: 2, remotive: 2, weworkremotely: 3, workingnomads: 4, arbeitnow: 4, hackernews: 5 };
+// Lower = preferred copy of a duplicated posting: company ATS first, bot-walled boards last.
+const SOURCE_RANK = { greenhouse: 0, lever: 0, ashby: 0, workable: 0, smartrecruiters: 0, recruitee: 0, breezy: 0, remoteok: 2, jobicy: 2, remotive: 2, weworkremotely: 3, workingnomads: 4, arbeitnow: 4, hackernews: 5, himalayas: 6, indeed: 7 };
 
 export async function hunt() {
   const cfg = config();
