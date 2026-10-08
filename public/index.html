@@ -210,7 +210,7 @@ function card(j) {
       <div class="title">${esc(j.title)}</div>
       <div class="meta"><span class="co">${esc(j.company)}</span><span>${esc(j.locationLabel || j.location)}</span>${j.salaryUSD ? `<span class="sal">${money(j.salaryUSD)}</span>` : ''}<span>${ago(j.postedAt)}</span></div>
       ${ai.reason ? `<div class="reason">${esc(ai.reason)}</div>` : `<div class="reason">${esc((j.reasons || []).join(' · '))}</div>`}
-      ${j.status === 'ready' && j.autopilot?.why ? `<div class="risk">Needs you: ${esc(j.autopilot.why)}${j.autopilot.todo?.length ? ' · ' + esc(j.autopilot.todo.slice(0, 4).join(' · ')) : ''}</div>` : ai.risks ? `<div class="risk">${esc(ai.risks)}</div>` : ''}
+      ${j.status === 'ready' && j.autopilot?.handoff ? `<div class="reason" style="color:var(--success)">Filled and ready. Just tick the human check and press Submit.</div>` : j.status === 'ready' && j.autopilot?.why ? `<div class="risk">Needs you: ${esc(j.autopilot.why)}${j.autopilot.todo?.length ? ' · ' + esc(j.autopilot.todo.slice(0, 4).join(' · ')) : ''}</div>` : ai.risks ? `<div class="risk">${esc(ai.risks)}</div>` : ''}
       <div class="tags">${ai.verdict ? `<span class="tag v-${ai.verdict}">${ai.verdict}</span>` : ''}<span class="tag">${esc(j.family || '')}</span><span class="tag">${esc(j.ats || j.source)}</span>${j.appliedVia === 'autopilot' ? `<span class="tag v-apply">Auto-applied</span>` : ''}${j.status === 'applied' ? `<span class="tag v-apply">Applied ${ago(j.appliedAt)}</span>` : ''}</div>
     </div>
     <div class="actions">
@@ -283,7 +283,7 @@ $('#q').oninput = (e) => { state.q = e.target.value; render(); };
 $('#runBtn').onclick = async () => { const r = await api('/api/run', { method: 'POST' }); toast(r.ok ? 'Hunting, tailoring and applying' : 'Already running'); load(); };
 $('#apBtn').onclick = async () => { const r = await api('/api/autopilot', { method: 'POST' }); toast(r.ok ? 'Applying to queued jobs in the background' : 'Already applying'); load(); };
 $('#batchBtn').onclick = async () => {
-  const ids = state.jobs.filter(TABS[0][2]).sort((a, b) => fitOf(b) - fitOf(a)).slice(0, 5).map((j) => j.id);
+  const ids = state.jobs.filter(TABS[0][2]).sort((a, b) => (b.autopilot?.handoff ? 1 : 0) - (a.autopilot?.handoff ? 1 : 0) || fitOf(b) - fitOf(a)).slice(0, 8).map((j) => j.id);
   if (!ids.length) return toast('Nothing needs you right now');
   await api('/api/apply', { method: 'POST', body: { ids } });
   toast(`Opening ${ids.length} pre-filled applications in Edge`);

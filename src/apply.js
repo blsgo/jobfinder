@@ -193,7 +193,7 @@ async function banner(page, job, result) {
     bar.style.cssText = 'position:fixed;z-index:2147483647;left:12px;right:12px;bottom:12px;padding:14px 18px;border-radius:16px;background:#020204;color:#cdd4e6;font:500 14px/1.45 Rajdhani,Segoe UI,sans-serif;border:1px solid rgba(216,180,254,.35);box-shadow:0 8px 40px rgba(168,85,247,.3);display:flex;gap:16px;align-items:center;flex-wrap:wrap';
     const status = fieldCount === 0
       ? '<b style="color:#fbbf24">No form found on this page.</b> Click the site\'s Apply button, then press <b>Re-fill</b> in the dashboard, or apply with the files in the job folder.'
-      : `<b style="color:#d8b4fe">Pre-filled ${filled.length} fields.</b> ${todo.length ? `<span style="color:#fbbf24">Needs you: ${todo.slice(0, 8).join(' · ')}</span>` : 'Everything recognised is filled.'} Review, then press the site\'s <b>Submit</b>.`;
+      : `<b style="color:#d8b4fe">Pre-filled ${filled.length} fields.</b> ${todo.length ? `<span style="color:#fbbf24">Needs you: ${todo.slice(0, 8).join(' · ')}</span>` : 'Everything is filled.'} Tick any <b>Verify you are human</b> box, then press <b>Submit</b>.`;
     bar.innerHTML = `<div style="flex:1;min-width:260px"><div style="letter-spacing:.2em;text-transform:uppercase;font-size:11px;color:#8892b0">${company} · ${title}</div>${status}</div>`;
     const btn = (label, fn) => {
       const b = document.createElement('button');
@@ -242,7 +242,13 @@ export async function openApplications(ids) {
     try {
       await page.goto(job.applyUrl || job.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
       await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-      const result = await fillPage(page, job, p);
+      // ATS forms keep drafts in local storage; start from a clean form every time.
+      if (await page.evaluate(() => { const n = localStorage.length; localStorage.clear(); return n; }).catch(() => 0)) await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+      const { prepareForm } = await import('./autopilot.js');
+      const prep = await prepareForm(page, job, p);
+      const result = prep.stop
+        ? { filled: [], todo: [prep.stop], fieldCount: 0 }
+        : { filled: prep.fill.filled, todo: prep.qs.map((q) => q.label.slice(0, 80)), fieldCount: prep.fill.fieldCount };
       await banner(page, job, result);
       updateJob(job.id, { status: job.status === 'applied' ? 'applied' : 'ready', prefill: { filled: result.filled.length, todo: result.todo, at: new Date().toISOString() } });
       log(`apply: pre-filled ${result.filled.length} fields, ${result.todo.length} need review | ${job.title} @ ${job.company}`);

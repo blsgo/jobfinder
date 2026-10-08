@@ -226,11 +226,46 @@ async function waitForConfirmation(page, ms = 25000) {
   while (Date.now() < end) {
     const text = await page.evaluate(() => document.body?.innerText?.slice(0, 6000) || '').catch(() => '');
     if (CONFIRM_RE.test(text) || /confirmation|thank-?you|application-submitted|\/success/i.test(page.url())) return { ok: true };
-    if (await page.evaluate(CAPTCHA).catch(() => false)) return { ok: false, why: 'CAPTCHA after submit' };
+    if (await hasCaptcha(page)) return { ok: false, captcha: true, why: 'Human check after submit' };
     await sleep(1500);
   }
   const errs = await page.evaluate(() => [...document.querySelectorAll('[role="alert"], [class*="error"]:not(:empty), [aria-invalid="true"]')].map((e) => (e.innerText || e.getAttribute('name') || '').trim()).filter(Boolean).slice(0, 5)).catch(() => []);
   return { ok: false, why: errs.length ? `Form errors: ${errs.join(' · ').slice(0, 200)}` : 'No confirmation page' };
+}
+
+const HANDOFF = "Pre-filled. Tick 'Verify you are human', then Submit";
+const CAPTCHA_TEXT = /verify you are human|i'?m not a robot|complete the security check|confirm you are human|are you a robot/i;
+async function hasCaptcha(page) {
+  if (await page.evaluate(CAPTCHA).catch(() => false)) return true;
+  // Challenge widgets often live in shadow DOM; Playwright still sees their frames.
+  for (const f of page.frames()) {
+    if (!/challenges\.cloudflare\.com|hcaptcha\.com|recaptcha\/api2\/bframe|turnstile/i.test(f.url())) continue;
+    const box = await (await f.frameElement().catch(() => null))?.boundingBox().catch(() => null);
+    if (box && box.width > 50 && box.height > 40) return true;
+  }
+  const text = await page.evaluate(() => document.body?.innerText?.slice(-4000) || '').catch(() => '');
+  return CAPTCHA_TEXT.test(text);
+}
+
+// Everything short of submitting: reach the form, fill it, attach files, answer what the facts allow.
+export async function prepareForm(page, job, p, cfg = config()) {
+  if (!(await reachForm(page))) return { stop: 'No application form found (external site or login needed)' };
+  if (await page.locator('input[type="password"]:visible').count()) return { stop: 'Asks you to create an account' };
+  const fill = await fillPage(page, job, p);
+  await page.waitForTimeout(2500); // some ATSs parse the CV and autofill fields; let that settle, then correct it
+  const addr = page.locator('input[name="address"]:visible, input[id="address"]:visible').first();
+  if (await addr.count() && !new RegExp(p.city || 'Dubai', 'i').test(await addr.inputValue().catch(() => p.city || 'Dubai'))) {
+    await addr.fill(p.location).catch(() => {}); await addr.press('Escape').catch(() => {});
+  }
+  let qs = await collectAll(page);
+  if (qs.length) {
+    const answers = await resolveQuestions(qs, job, p, cfg).catch((e) => { log(`autopilot: answer step failed ${e.message}`); return {}; });
+    if (job.files?.dir) fs.writeFileSync(path.join(job.files.dir, 'autopilot-answers.json'), JSON.stringify({ questions: qs.map(({ frame, ...q }) => q), answers }, null, 2));
+    for (const frame of new Set(qs.map((q) => q.frame))) await applyAnswers(frame, qs.filter((q) => q.frame === frame), answers);
+    await page.waitForTimeout(800);
+    qs = await collectAll(page);
+  }
+  return { fill, qs };
 }
 
 const DIRECT_ATS = ['greenhouse', 'lever', 'ashby', 'workable', 'recruitee', 'smartrecruiters', 'breezy'];
@@ -250,27 +285,14 @@ async function processJob(ctx, job, p, cfg, live) {
     await page.waitForLoadState('networkidle', { timeout: 12000 }).catch(() => {});
     if (/just a moment|attention required|blocked/i.test(await page.title().catch(() => ''))) return note('needs-you', { why: 'Site bot check; open the job link yourself' });
     if (/indeed\.com\/(account|auth)|linkedin\.com\/(login|authwall|checkpoint)|accounts\.google/i.test(page.url())) return note('needs-you', { why: 'Login wall' });
-    if (!(await reachForm(page))) return note('needs-you', { why: 'No application form found (external site or login needed)' });
-    if (await page.locator('input[type="password"]:visible').count()) return note('needs-you', { why: 'Asks you to create an account' });
-
-    const fill = await fillPage(page, job, p);
-    await page.waitForTimeout(2500); // some ATSs parse the CV and autofill fields; let that settle, then correct it
-    const addr = page.locator('input[name="address"]:visible, input[id="address"]:visible').first();
-    if (await addr.count() && !new RegExp(p.city || 'Dubai', 'i').test(await addr.inputValue().catch(() => p.city || 'Dubai'))) {
-      await addr.fill(p.location).catch(() => {}); await addr.press('Escape').catch(() => {});
-    }
-    let qs = await collectAll(page);
-    if (qs.length) {
-      const answers = await resolveQuestions(qs, job, p, cfg).catch((e) => { log(`autopilot: answer step failed ${e.message}`); return {}; });
-      if (job.files?.dir) fs.writeFileSync(path.join(job.files.dir, 'autopilot-answers.json'), JSON.stringify({ questions: qs.map(({ frame, ...q }) => q), answers }, null, 2));
-      for (const frame of new Set(qs.map((q) => q.frame))) await applyAnswers(frame, qs.filter((q) => q.frame === frame), answers);
-      await page.waitForTimeout(800);
-      qs = await collectAll(page);
-    }
+    const prep = await prepareForm(page, job, p, cfg);
+    if (prep.stop) return note('needs-you', { why: prep.stop });
+    const { fill } = prep;
+    let { qs } = prep;
     const shot = path.join(job.files?.dir || DATA, 'autopilot-form.png');
     await page.screenshot({ path: shot, fullPage: true }).catch(() => {});
     if (qs.length) return note('needs-you', { why: 'Questions only you can answer', todo: qs.map((q) => q.label.slice(0, 120)), filled: fill.filled.length });
-    if (await page.evaluate(CAPTCHA).catch(() => false)) return note('needs-you', { why: 'CAPTCHA on form', filled: fill.filled.length });
+    if (await hasCaptcha(page)) return note('needs-you', { why: HANDOFF, handoff: true, filled: fill.filled.length });
     if (!fill.filled.some((f) => /CV/.test(f))) return note('needs-you', { why: 'Could not attach CV', filled: fill.filled.length });
     const review = await reviewForm(page, job, p).catch((e) => ({ ok: false, problems: [`review failed: ${e.message.slice(0, 80)}`] }));
     if (job.files?.dir) fs.writeFileSync(path.join(job.files.dir, 'autopilot-review.json'), JSON.stringify(review, null, 2));
@@ -280,7 +302,8 @@ async function processJob(ctx, job, p, cfg, live) {
     if (!(await clickSubmit(page))) return note('needs-you', { why: 'Submit button not found' });
     const res = await waitForConfirmation(page);
     await page.screenshot({ path: path.join(job.files?.dir || DATA, 'autopilot-result.png'), fullPage: true }).catch(() => {});
-    return res.ok ? note('applied', { filled: fill.filled.length }) : note('needs-you', { why: res.why });
+    if (res.ok) return note('applied', { filled: fill.filled.length });
+    return note('needs-you', { why: res.captcha ? HANDOFF : res.why, handoff: !!res.captcha, filled: fill.filled.length });
   } catch (e) {
     return note('error', { why: e.message.slice(0, 200) });
   } finally {
@@ -311,16 +334,22 @@ export async function autopilot({ limit, ids, dry } = {}) {
   log(`autopilot: ${queue.length} jobs, ${live ? 'LIVE submit' : 'dry run (no submit)'}`);
   if (!queue.length) return;
   // Fresh browser every run: ATS forms save drafts in local storage, and stale drafts must never leak in.
-  const browser = await chromium.launch({ channel: 'msedge', headless: false, args: ['--window-position=-32000,-32000'] }); // off-screen
-  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, locale: 'en-US' });
+  let browser = await chromium.launch({ channel: 'msedge', headless: false, args: ['--window-position=-32000,-32000'] }); // off-screen
+  let ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, locale: 'en-US' });
   const tally = {};
   try {
     for (const [i, job] of queue.entries()) {
-      const r = await processJob(ctx, job, p, cfg, live);
+      if (!browser.isConnected()) { // window closed / PC slept: start a fresh one and carry on
+        browser = await chromium.launch({ channel: 'msedge', headless: false, args: ['--window-position=-32000,-32000'] });
+        ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, locale: 'en-US' });
+      }
+      let r = await processJob(ctx, job, p, cfg, live);
+      if (r.state === 'error' && /closed|disconnected/i.test(r.why || '')) r = { ...r, state: 'error', why: 'Browser closed mid-run; will retry next run' };
       tally[r.state] = (tally[r.state] || 0) + 1;
       const patch = { autopilot: r };
       if (r.state === 'applied') Object.assign(patch, { status: 'applied', appliedAt: r.at, appliedVia: 'autopilot' });
       if (r.state === 'needs-you') Object.assign(patch, { status: 'ready', prefill: { todo: r.todo || [r.why], at: r.at } });
+      if (r.state === 'error') Object.assign(patch, { status: 'tailored' });
       updateJob(job.id, patch);
       log(`autopilot: ${r.state.toUpperCase()}${r.why ? ` (${r.why})` : ''} | ${job.title} @ ${job.company}`);
       if (i < queue.length - 1) {
